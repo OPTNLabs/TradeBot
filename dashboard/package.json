@@ -1,0 +1,33 @@
+{
+  "name": "tradebot-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Read-only React + Vite + Tailwind dashboard for TradeBot. Talks to the T16 read-only HTTP backend on port 8787.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4173",
+    "test": "node --test tests/*.test.mjs",
+    "lint": "node scripts/lint.mjs",
+    "postinstall": "node ../scripts/postinstall-dashboard.mjs"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2",
+    "recharts": "^2.13.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "vite": "^5.4.11"
+  }
+}

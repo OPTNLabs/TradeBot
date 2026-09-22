@@ -1,0 +1,239 @@
+{
+  "version": 2,
+  "tuning_preset": "small_balance_startup",
+  "balance_aware": true,
+  "notes": "Small-balance tuned preset (active 2026-09-10). With ~$10-20 USD of BCH, every position has to be small enough that slippage+fees don't eat the trade. max_position_bch=0.005 keeps each trade at ~10-12% of wallet. Scale these values up ONLY after a 7-day live run with positive P&L.",
+  "scoring": {
+    "weights": {
+      "volume_24h_bch": 0.1,
+      "volume_7d_bch": 0.1,
+      "volume_30d_bch": 0.3,
+      "volatility_24h_pct": 0.1,
+      "tvl_bch": 0.1,
+      "apy_30d_pct": 0.1,
+      "fee_yield_bps": 0.05,
+      "upward_volatility": 0.15
+    },
+    "min_score": 0.35,
+    "min_volume_7d_bch": 0.05,
+    "min_volume_30d_bch": 1.0,
+    "min_tvl_bch": 0.25,
+    "_min_trade_count_24h_comment": "T44: staleness gate \u2014 reject any token the indexer reports as having zero trades in the current 24h window. Defends against phantom-price entries (QBTC had trade_count=0, price_now_sats=32.7B). Set to 0 to disable.",
+    "min_trade_count_24h": 1,
+    "_min_fee_yield_bps_comment": "T75: synthesized LP-fee-yield floor. Drops pools whose fee_yield_bps (trade_count \u00d7 fee_rate_bps / max(tvl_sats, 1)) is below this minimum. Defense-in-depth on top of min_trade_count_24h \u2014 catches pools that have trades but aren't generating meaningful LP fee income relative to their TVL. Set to 0 to disable.",
+    "min_fee_yield_bps": 10,
+    "min_upward_volatility": 0.05,
+    "max_pool_age_days": 7,
+    "top_k_candidates": 3,
+    "excluded_tokens": [
+      "2469acc5afa4b10cb5b5c04afb89c3a3ffd61c5da9c01e26d00951cae2a02544",
+      "b38a33f750f84c5c169a6f23cb873e6e79605021585d4f3408789689ed87f366",
+      "PUSD",
+      "MUSD"
+    ],
+    "stablecoins": [
+      "PUSD",
+      "MUSD"
+    ],
+    "caps": {
+      "volume_24h_bch": 10.0,
+      "volume_7d_bch": 50.0,
+      "volume_30d_bch": 200.0,
+      "tvl_bch": 5.0
+    },
+    "linear_caps": {
+      "volatility_24h_pct": 30.0,
+      "apy_30d_pct": 200.0,
+      "fee_yield_bps": 500,
+      "volume_30d_bch": 200.0
+    },
+    "fee_rate_bps": 30,
+    "staleness_threshold": 0.5,
+    "_adaptive_weights_comment": "T56-2 \u2014 auto-tune scoring.weights from the last `adaptive_weights_window_days` of closed trades. Disabled by default; flip `scoring.adaptive_weights_enabled=true` to opt in. Every applied weight-set is written to `config/user.json` (deep-merge \u2014 WIF/mnemonic untouched) AND stamped into `data/adaptive-weights.jsonl` for audit. Hot-read every tick; no restart needed.",
+    "adaptive_weights_enabled": false,
+    "adaptive_weights_min_closed_trades": 5,
+    "adaptive_weights_window_days": 7,
+    "adaptive_weights_max_delta_per_feature": 0.05,
+    "adaptive_weights_calibration_floor": 0.1,
+    "_concentration_comment": "T76 subset 1 \u2014 operator-curated blacklist of token_ids the loop should drop pre-entry on the rug-concentration rationale. The actual automated detection (scanning the chain for the top-N holders + comparing to the threshold) is deferred to T76 subset 2: today neither the Cauldron indexer nor the standard Electrum providers surface a token-holders endpoint, so an in-process scanner is required (chain-state fetch + per-UTXO CashTokens FT output aggregation). This subset ships the math + the operator's manually-maintained list. Format: array of 64-char lowercase hex token_ids. The same lowercased-membership semantics as `excluded_tokens` apply. Default empty.",
+    "excluded_concentration_tokens": [],
+    "concentration_rug_top_n": 5,
+    "concentration_rug_threshold_pct": 80,
+    "concentration_rug_epsilon_pct": 1.0,
+    "_concentration_rug_enabled_comment": "T76 subset 2a \u2014 opt-in switch for the live holders scanner on the dashboard endpoint. Default false (subset 1 stub behavior preserved) so operators who haven't audited the upstream don't accidentally start broadcasting their token_ids to a third party. Flip to true to enable the live wire-up at `/api/token/<id>/holders`; the existing stub envelope stays in place for operators who leave it OFF. Hot-read every request (no restart needed).",
+    "concentration_rug_enabled": false,
+    "_concentration_rug_provider_url_comment": "T76 subset 2a \u2014 override for the TokenStork upstream URL. Defaults to `https://tokenstork.com` (the only public BCH FT-UTXO holders endpoint discovered on 2026-09-20). Operators who mirror the upstream behind a corp proxy / cache can set this without a code change. Restart:false (hot-read).",
+    "concentration_rug_provider_url": "https://tokenstork.com",
+    "_concentration_rug_timeout_ms_comment": "T76 subset 2a \u2014 per-request timeout (ms) for the upstream fetch. Default 5000 (the upstream typically responds in <1s). Clamped at 60000 by `clampHoldersScannerCacheMs`-style helper so a typo'd knob can't hang a tick. Restart:false (hot-read).",
+    "concentration_rug_timeout_ms": 5000,
+    "_concentration_rug_cache_ms_comment": "T76 subset 2a \u2014 per-token TTL cache window (ms) for the holders scanner. Default 300000 (5 minutes). Set to 0 to disable caching (every dashboard poll re-fetches the upstream). Clamped at 3600000 (1h) so a typo can't disable the cache for a day. Restart:false (hot-read).",
+    "concentration_rug_cache_ms": 300000
+  },
+  "entry": {
+    "max_position_bch": 0.005,
+    "max_total_exposure_bch": 0.04,
+    "min_entry_gap_from_high_pct": 2.0,
+    "slippage_tolerance_bps": 100,
+    "use_post_trade_check": true,
+    "min_trade_size_bch": 0.0005,
+    "max_indexer_vs_amm_ratio_x": 1000,
+    "min_amm_total_depth_sats": 150000000,
+    "max_position_concentration_pct": 25.0,
+    "volatility_sizing_target_pct": 5.0,
+    "allow_second_position_discount_pct": 0.2,
+    "correlation_skip_threshold": -1,
+    "min_pool_age_days": 7,
+    "_slippage_cap_per_token_comment": "T55: per-token slippage cap derived from AMM pool depth. The flat slippage_tolerance_bps is replaced by a depth-aware cap when poolDepthSats is available: cap = clamp(est_constant_product_slippage_bps * multiplier, slippage_cap_min_bps, slippage_cap_max_bps). Deep pools get a tighter cap (protection); shallow pools get a looser cap (legitimate trades don't get rejected). Set slippage_cap_per_token_enabled=false to restore the v1 flat-cap behavior.",
+    "slippage_cap_per_token_enabled": true,
+    "slippage_cap_min_bps": 30,
+    "slippage_cap_max_bps": 250,
+    "slippage_cap_multiplier": 2.0
+  },
+  "exit": {
+    "take_profit_pct": 5.0,
+    "stop_loss_pct": 3.0,
+    "time_stop_hours": 24,
+    "time_stop_hours_synced": 6,
+    "trailing_stop_pct": 2.0,
+    "trailing_stop_activation_pct": 2.0,
+    "max_price_vs_entry_ratio_x": 1000,
+    "tp_vol_multiplier": 2.0,
+    "sl_vol_multiplier": 1.0,
+    "tp_vol_floor_pct": 2.0,
+    "tp_vol_ceiling_pct": 80.0,
+    "sl_vol_floor_pct": 1.0,
+    "sl_vol_ceiling_pct": 50.0,
+    "min_realized_pnl_sats": 3000,
+    "time_stop_extension_hours": 6,
+    "min_realized_pnl_enabled": true
+  },
+  "risk": {
+    "max_daily_loss_bch": 0.005,
+    "max_consecutive_losses": 3,
+    "circuit_breaker_cooldown_hours": 6,
+    "min_wallet_balance_bch": 0.005,
+    "loss_cooldown_minutes": 30,
+    "utxo_consolidation_check_enabled": true,
+    "utxo_consolidation_dust_sats": 1000,
+    "utxo_consolidation_min_balance_bch": 0.01,
+    "utxo_consolidation_auto_enabled": false,
+    "utxo_consolidation_fee_sat_per_byte": 1,
+    "_dust_position_auto_close_comment": "T87: dust-position auto-close. When ON, at the end of every trader-loop tick the bot evaluates every open position against the close-cost test (tx fee + slippage \u00d7 budget_multiplier). Positions whose projected market value is below that threshold are auto-closed via the same Positions.close() API (bch_received_sats:0, reason:'dust_position_auto_close') so the dashboard / P&L rollups see the synthetic close immediately. Operator-set `exit_overrides.prevent_stop_loss:true` overrides the dust gate (hold until profit always wins). Default OFF \u2014 opt-in for safety. Hot-read every tick (`restart:false`).",
+    "dust_position_auto_close_enabled": false,
+    "dust_position_close_tx_fee_sats": 1500,
+    "dust_position_close_slippage_bps": 100,
+    "dust_position_close_margin_bps": 50,
+    "dust_position_close_budget_multiplier": 1.5,
+    "dust_position_close_min_token_amount": null
+  },
+  "wallet": {
+    "backend": "external_wif",
+    "bip44_path": "m/44'/145'/0'/0/0",
+    "network": "mainnet",
+    "address": ""
+  },
+  "loop": {
+    "poll_interval_seconds": 60,
+    "snapshot_interval_seconds": 300,
+    "history_retention_days": 365
+  },
+  "data_sources": {
+    "cauldron_indexer_base_url": "https://indexer.riften.net/cauldron",
+    "electrum_host": "electrum.imaginary.cash",
+    "electrum_port": 50004,
+    "user_agent": "TradeBot/0.1 (LifestoneLabs)"
+  },
+  "dashboard": {
+    "bind_host": "127.0.0.1",
+    "bind_port": 8787,
+    "request_timeout_ms": 10000,
+    "cors_origin": null,
+    "log_level": "info",
+    "api_token": null,
+    "history_max_events": 5000,
+    "snapshots_max_records": 2000,
+    "snapshot_default_range": "30d",
+    "history_default_range": "7d",
+    "positions_default_status": "open",
+    "auth_header_name": "authorization",
+    "static_root": "dashboard/dist",
+    "static_index": "index.html",
+    "research_runs_max_events": 50,
+    "reasoning_max_ticks": 5,
+    "reasoning_decisions_per_tick": 20,
+    "trade_history_default_range": "30d",
+    "trade_history_max_events": 2000,
+    "health_utxo_timeout_ms": 5000,
+    "snapshot_aggregate_cache_ms": 30000
+  },
+  "paths": {
+    "feature_ideas_file": "data/feature-ideas.json",
+    "bugs_file": "data/bugs.json",
+    "todo_file": "TODO.md"
+  },
+  "feature_researcher": {
+    "enabled": true,
+    "max_per_run": 3,
+    "min_interval_hours": 12
+  },
+  "staking": {
+    "_comment": "T75 (BadgerCoin staking live wire, 2026-09-19) \u2014 single-position auto-lock that uses half of the wallet's available BCH (operator-approved at 2026-09-19 22:58 PDT). Three operator-facing knobs must all be true for the auto-lock path to fire: `enabled`, `simulation_only:false`, `auto_lock_enabled`. The unlock counterpart is `auto_unlock_enabled`. `max_active_stakes:1` is a hard invariant (also enforced by the `STALE_LOCK_EXISTS` guard inside `executeLock`). The `allow_when_positions_open` knob is kept for backward-compat but is IGNORED by the live wire \u2014 open trading positions no longer factor into the BadgerStake decision (per operator spec). `lock_amount_sats` is also kept for backward-compat but IGNORED \u2014 the loop computes `lock_amount_sats = wallet_balance / 2` on every tick. The reserve floor `lock_min_balance_bch` still gates the attempt (refuses to lock if it would leave the wallet below this floor).",
+    "enabled": false,
+    "network": "mainnet",
+    "contract_address": "bitcoincash:pvgcl3xk6nwqlngkk09e7g67x5vxs57jv6v2q4qm4ct5yv4d3ppfgl3tq982v",
+    "watchtower_base": "https://watchtower.cash/api/",
+    "lock_amount_sats": 500000,
+    "lock_min_sats": 5000,
+    "lock_max_sats": 50000000,
+    "stake_blocks": 1440,
+    "max_active_stakes": 1,
+    "inactive_fraction_to_stake": 0.5,
+    "allow_when_positions_open": true,
+    "simulation_only": true,
+    "request_timeout_ms": 10000,
+    "lock_min_balance_bch": 0.005,
+    "lock_unlock_grace_seconds": 60,
+    "fee_sat_per_byte": 1,
+    "auto_lock_enabled": false,
+    "auto_unlock_enabled": false,
+    "unlock_cron_enabled": false,
+    "unlock_cron_minutes": 15,
+    "dashboard_tip_height_cache_ms": 30000,
+    "attempt_log_file": "data/stake-attempts.jsonl",
+    "attempt_log_max": 50
+  },
+  "dex": {
+    "active": [
+      "cauldron"
+    ],
+    "safe_mode_active": false,
+    "safe_mode_pool_cache_file": "data/dex-safe-mode-pools.json",
+    "safe_mode_indexer_url": "https://indexer.riften.net/cauldron",
+    "guanaco": {
+      "indexer_url": null,
+      "sdk_module": null,
+      "default_fee_tier": 1,
+      "buyback_pkh": "748e3dffdc1ab726e8d7d8d381e56034871fe623",
+      "request_timeout_ms": 10000
+    }
+  },
+  "alerts": {
+    "_comment": "T53.1 \u2014 alerts subsystem foundation. Disabled by default so dispatch() is a true noop until the operator opts in. T53.2 wires the trader loop's dispatch points; T53.3 (future) adds per-decision-point dispatches. T59 subset 1 adds `orphan_position_check_enabled` so the manual CLI can suppress the orphan-position alert without disabling the whole subsystem. T59 subset 2 auto-wires the check into `src/trader/loop.mjs` (step 9 of `_runTick`) and hot-reads this flag every tick \u2014 the operator can flip `orphan_position_check_enabled` to `false` without a restart to disable the per-tick self-check (the manual CLI keeps working). T62 adds `orphan_auto_reconcile_enabled` (default false so a fresh install can never silently close positions) + `orphan_auto_reconcile_min_age_minutes` (default 60 so a UTXO-scan race can't close a freshly-detected orphan). T62 auto-wires step 9.5 of `_runTick` and hot-reads both flags every tick.",
+    "enabled": false,
+    "channels": [
+      "console"
+    ],
+    "dedup_window_ms": 60000,
+    "telegram_chat_id": null,
+    "console_min_severity": "info",
+    "telegram_min_severity": "warn",
+    "noop_min_severity": "info",
+    "orphan_position_check_enabled": true,
+    "orphan_auto_reconcile_enabled": false,
+    "orphan_auto_reconcile_min_age_minutes": 60
+  },
+  "telegram": {
+    "_comment": "T53.1 \u2014 Bot API token. NEVER set this in config/default.json \u2014 load from config/user.json (gitignored, chmod 600). The router only sends when `alerts.enabled === true` AND `alerts.channels` contains 'telegram' AND both `telegram.bot_token` and `alerts.telegram_chat_id` are populated.",
+    "bot_token": null
+  }
+}

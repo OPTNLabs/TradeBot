@@ -1,0 +1,128 @@
+# .github/workflows/ci.yml
+#
+# TradeBot CI — runs on every PR + push to main.
+#
+# Two jobs:
+#
+#   1. `smoke-test-swap` (T66) — runs `npm run smoke-test-swap` so every
+#      PR that touches `package.json` / `package-lock.json` /
+#      `scripts/smoke-test-swap.mjs` / `src/trader/cauldron/*.mjs` /
+#      `src/wallet/libauth.mjs` validates the installed
+#      `@mr-zwets/cauldron-swap-sdk` + `cashscript` versions BEFORE merge.
+#      A silent breaking change in a 0.x minor (the SDK is currently
+#      `0.1.9`, cashscript `0.13.2`) would otherwise reach production
+#      without any signal.
+#
+#   2. `unit-tests` — runs the existing `node --test` suite. The suite
+#      already covers the trader loop, dashboard server, risk panel,
+#      snapshot aggregator, per-token trade log, staking, etc.
+#
+# Exit-code contract from `scripts/smoke-test-swap.mjs`:
+#   0 = OK, 1 = SDK error, 2 = config error, 3 = network error.
+# Any non-zero exit fails the CI job.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel in-flight CI on the same PR / branch when a new push comes in.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke-test-swap:
+    name: SDK-version pin smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    defaults:
+      run:
+        working-directory: ./
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps (skip postinstall smoke on bootstrap)
+        # We run the smoke test as its own step (`Run smoke test`) below,
+        # so disable npm's `postinstall` here to avoid double-running.
+        # CI still respects the smoke test contract because the explicit
+        # step is the gating one.
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Run smoke test (imports-only)
+        # Default `imports-only` mode — no Electrum, no chain. 30s wall
+        # clock budget matches the `DEFAULT_TIMEOUT_MS` constant in
+        # `scripts/smoke-test-swap.mjs`.
+        run: npm run smoke-test-swap -- --json
+        env:
+          # Mute npm's progress bar so the JSON envelope is readable in
+          # the CI log.
+          NO_COLOR: '1'
+
+      - name: Smoke test — capture JSON envelope for the PR
+        if: always()
+        run: npm run smoke-test-swap -- --json > smoke-test.json || true
+        # This step never gates the build (note the `|| true`); it just
+        # captures the envelope as a build artifact so the operator can
+        # inspect it from the Actions tab.
+
+      - name: Upload smoke-test artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-envelope
+          path: smoke-test.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+  unit-tests:
+    name: Unit tests (node:test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: smoke-test-swap
+    defaults:
+      run:
+        working-directory: ./
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps (skip postinstall smoke on bootstrap)
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Run unit tests
+        # The suite already includes the dashboard server supertests,
+        # the trader loop, the staking helpers, the snapshot aggregator,
+        # the health endpoint, and 10 new tests for the smoke-test
+        # script that ship with T66. Total wall time on a clean checkout
+        # is ~30-60s; the dashboard suite is the slow part.
+        run: npm test 2>&1 | tee test-output.txt
+        env:
+          # The dashboard suite opens ephemeral ports for supertest.
+          CI: 'true'
+          NO_COLOR: '1'
+
+      - name: Upload test output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-output
+          path: test-output.txt
+          if-no-files-found: ignore
+          retention-days: 14
