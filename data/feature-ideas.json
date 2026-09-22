@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "ideas": [],
+  "meta": {
+    "total_count": 0,
+    "open_count": 0,
+    "in_progress_count": 0,
+    "shipped_count": 0,
+    "wontfix_count": 0,
+    "next_priority": 0,
+    "highest_priority": null
+  }
+}

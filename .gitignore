@@ -1,0 +1,73 @@
+# Dependencies
+node_modules/
+*/node_modules/
+**/node_modules/
+
+# Build output
+dist/
+build/
+*/dist/
+*/build/
+dashboard/dist/
+**/dist/
+**/build/
+
+# Local config — CONTAINS WALLET WIF. NEVER COMMIT.
+config/user.json
+config/*.local.json
+
+# Runtime state at the REPO ROOT — gitignored to avoid leaking trade history / positions.
+# (`data/` matches BOTH `data/` at the repo root AND `src/data/` via the `**`
+#  below, but `src/data/` is fetcher code and is intentionally tracked. To
+#  handle that, the broad `/data/` pattern is replaced with file-specific
+#  patterns so we can include the audit files below.
+#
+# Audit files (NOT secrets, NOT runtime) — tracked in git so the audit trail
+# moves with the repo to another machine. Validated by schema.mjs on every
+# load; write new audit files through the store API so the envelope + version
+# stay consistent.
+!/data/feature-ideas.json
+!/data/bugs.json
+/data/positions.json
+/data/positions.json.bak
+/data/positions.json.tmp
+/data/history.jsonl
+/data/history.jsonl.bak
+/data/history.ndjson
+/data/snapshots/
+/data/run.pid
+/data/top-tokens.json
+/data/*.jsonl
+/data/*.ndjson
+/data/*.local.json
+
+# Logs
+*.log
+logs/
+dashboard/*.log
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Env files (in case anyone uses one)
+.env
+.env.*
+!.env.example
+
+# Paytaca state (if the bot runs the CLI in-process)
+.paytaca/
+
+# Test artifacts
+coverage/
+.nyc_output/
+test-results/
+
+# Cron / process bookkeeping
+*.pid
+*.sock
