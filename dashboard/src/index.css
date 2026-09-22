@@ -1,0 +1,40 @@
+/* dashboard/src/index.css
+ *
+ * Tailwind directives + a few global rules the dashboard needs.
+ * Tailwind handles the rest via the utility classes on each
+ * component.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  /* Card-like panel used across all three views. */
+  .panel {
+    @apply bg-ink-900 border border-ink-700 rounded-md shadow-panel;
+  }
+  /* Section heading inside a panel. */
+  .panel-title {
+    @apply text-xs font-mono uppercase tracking-wider text-ash-300 px-4 py-2 border-b border-ink-700;
+  }
+  /* Numeric tabular cell — monospace + tabular-nums so columns
+   * align cleanly across rows. */
+  .num {
+    @apply font-mono tabular-nums;
+  }
+  /* Small muted label used under KPI numbers. */
+  .label {
+    @apply text-[11px] font-mono uppercase tracking-wider text-ash-300;
+  }
+}

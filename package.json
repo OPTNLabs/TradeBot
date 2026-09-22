@@ -1,0 +1,40 @@
+{
+  "name": "tradebot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "BCH trading bot that monitors cauldron.quest DEX pools and grows wallet balance via volume/volatility-driven entry/exit",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node scripts/run-bot.mjs",
+    "bot": "node scripts/run-bot.mjs",
+    "dashboard": "node scripts/start-dashboard.mjs",
+    "setup": "node bin/tradebot-cli.mjs setup",
+    "init-wallet": "node scripts/init-wallet.mjs",
+    "snapshot": "node scripts/snapshot.mjs",
+    "smoke-test-swap": "node scripts/smoke-test-swap.mjs --imports-only",
+    "postinstall": "node scripts/smoke-test-swap.mjs --imports-only --timeout-ms=30000 || true",
+    "test": "node --test tests/*.test.mjs tests/**/*.test.mjs",
+    "lint": "node scripts/lint.mjs",
+    "scan-keys": "bash scripts/pre-commit-key-scan.sh",
+    "dashboard:dev": "cd dashboard && npm run dev",
+    "dashboard:build": "cd dashboard && npm run build",
+    "dashboard:install": "cd dashboard && npm install"
+  },
+  "dependencies": {
+    "@bitauth/libauth": "3.1.0-next.8",
+    "@cashscript/utils": "0.13.2",
+    "@mr-zwets/cauldron-swap-sdk": "0.1.9",
+    "cashscript": "0.13.2",
+    "node-fetch": "3.3.2"
+  },
+  "devDependencies": {
+    "supertest": "7.0.0"
+  },
+  "bin": {
+    "tradebot": "scripts/run-bot.mjs"
+  }
+}
